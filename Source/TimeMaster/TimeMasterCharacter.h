@@ -19,6 +19,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FBulletCountUpdatedDelegate, int32, MagazineSize, int32, Bullets);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDamagedDelegate, float, LifePercent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTimeReverseDelegate, bool, IsTimeReversing);
 
 UCLASS()
 class TIMEMASTER_API ATimeMasterCharacter : public ACharacter,public ITimeMasterWeaponHolder
@@ -63,6 +64,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* SwitchWeaponAction;
 
+
+	/** TimeReverse action */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* TimeReverseAction;
+
 	/** Name of the first person mesh weapon socket */
 	UPROPERTY(EditAnywhere, Category = "Weapons")
 	FName FirstPersonWeaponSocket = FName("HandGrip_R");
@@ -97,6 +103,8 @@ public:
 
 	/** Damaged delegate */
 	FDamagedDelegate OnDamaged;
+
+	FTimeReverseDelegate TimeReverseDelegate;
 public:
 	// Sets default values for this character's properties
 	ATimeMasterCharacter();
@@ -151,6 +159,14 @@ protected:
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoJumpEnd();
+
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	virtual void DoTimeReverseStart();
+
+	/** Handles jump end inputs from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	virtual void DoTimeReverseEnd();
 
 	/** Attaches a weapon's meshes to the owner */
 	virtual void AttachWeaponMeshes(ATimeMasterWeapon* Weapon) override;

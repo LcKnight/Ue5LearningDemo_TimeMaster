@@ -42,33 +42,22 @@ void AWeaponPickup::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-
+	if (FWeaponTableRow* WeaponData = WeaponType.GetRow<FWeaponTableRow>(FString()))
+	{
+		// set the mesh
+		Mesh->SetStaticMesh(WeaponData->StaticMesh.LoadSynchronous());
+	}
 }
 
-
-
-// Called when the game starts or when spawned
 void AWeaponPickup::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-
 	if (FWeaponTableRow* WeaponData = WeaponType.GetRow<FWeaponTableRow>(FString()))
 	{
-		if (WeaponData->StaticMesh.IsValid())
-		{
-			// 加载并设置 Mesh
-			Mesh->SetStaticMesh(WeaponData->StaticMesh.LoadSynchronous());
-		}
-
-		// 复制武器类
+		// copy the weapon class
 		WeaponClass = WeaponData->WeaponToSpawn;
 	}
-
-
-
-
 }
 
 void AWeaponPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)

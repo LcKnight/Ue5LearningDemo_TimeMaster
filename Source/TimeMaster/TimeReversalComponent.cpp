@@ -2,6 +2,9 @@
 
 
 #include "TimeReversalComponent.h"
+#include "TimeMasterCharacter.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/StaticMeshComponent.h"
 
 // Sets default values for this component's properties
 UTimeReversalComponent::UTimeReversalComponent()
@@ -24,6 +27,10 @@ void UTimeReversalComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+	if(!IsInit) {
+		Owner = GetOwner();
+		IsInit = true;
+	}
 	
 }
 

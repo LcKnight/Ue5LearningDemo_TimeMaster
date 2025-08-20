@@ -104,6 +104,9 @@ void ATimeMasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Switch weapon
 		EnhancedInputComponent->BindAction(SwitchWeaponAction, ETriggerEvent::Triggered, this, &ATimeMasterCharacter::DoSwitchWeapon);
+
+		EnhancedInputComponent->BindAction(TimeReverseAction, ETriggerEvent::Started, this, &ATimeMasterCharacter::DoTimeReverseStart);
+		EnhancedInputComponent->BindAction(TimeReverseAction, ETriggerEvent::Completed, this, &ATimeMasterCharacter::DoTimeReverseStart);
 	}
 	else {
 		UE_LOG(TimeMaster, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
@@ -183,6 +186,16 @@ void ATimeMasterCharacter::DoJumpEnd()
 {
 	// pass StopJumping to the character
 	StopJumping();
+}
+
+void ATimeMasterCharacter::DoTimeReverseStart()
+{
+	TimeReverseDelegate.Broadcast(true);
+}
+
+void ATimeMasterCharacter::DoTimeReverseEnd()
+{
+	TimeReverseDelegate.Broadcast(false);
 }
 
 void ATimeMasterCharacter::DoStartFiring()
