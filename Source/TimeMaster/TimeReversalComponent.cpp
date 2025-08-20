@@ -28,13 +28,16 @@ void UTimeReversalComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	if(!IsInit) {
+	if (!IsInit) {
 		Owner = GetOwner();
 		IsInit = true;
-		ATimeMasterCharacter* TimeMasterCharacter = Cast<ATimeMasterCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-		TimeMasterCharacter->TimeReverseDelegate.AddDynamic(this, &UTimeReversalComponent::SetTimeReversing);
+		// 检查玩家角色是否存在
+		if (ATimeMasterCharacter* TimeMasterCharacter = Cast<ATimeMasterCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			TimeMasterCharacter->TimeReverseDelegate.AddDynamic(this, &UTimeReversalComponent::SetTimeReversing);
+		}
 	}
-	
+
 }
 
 
@@ -43,7 +46,7 @@ void UTimeReversalComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...、
+	// ...
 	if (!IsInit) {
 		return;
 	}
@@ -52,11 +55,11 @@ void UTimeReversalComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 		// Then, call GetComponents<T>() on the owner actor.
 		Owner->GetComponents<UStaticMeshComponent>(CompArray);
-		if(CompArray.Num() > 0) {
+		if (CompArray.Num() > 0) {
 			UStaticMeshComponent* USMC = Cast<UStaticMeshComponent>(CompArray[0]);
 			if (USMC) {
 				TimeInfo NewFrame(Owner->GetActorLocation(), Owner->GetActorRotation(), USMC->GetPhysicsLinearVelocity(), USMC->GetPhysicsAngularVelocityInDegrees(), DeltaTime);
-				if (RecordTimeLength <= 10.f)
+				if (RecordTimeLength <= 15.f)
 				{
 					TimeFrames.AddTail(NewFrame);
 					RecordTimeLength += DeltaTime;
@@ -87,23 +90,16 @@ void UTimeReversalComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			IsOutdated = true;
 		}
 		else if (TailFrame) {
+			// 直接设置位置和旋转，因为物理模拟已禁用
 			Owner->SetActorLocation(TailFrame->GetValue().Location);
-			Owner->SetActorLocation(TailFrame->GetValue().Location);
-			TArray<UStaticMeshComponent*> CompArray;
+			Owner->SetActorRotation(TailFrame->GetValue().Rotation);
 
-			// Then, call GetComponents<T>() on the owner actor.
-			Owner->GetComponents<UStaticMeshComponent>(CompArray);
-			if (CompArray.Num() > 0)
-			{
-				UStaticMeshComponent* USMC = Cast<UStaticMeshComponent>(CompArray[0]);
-				if (USMC)
-				{
-					USMC->SetPhysicsLinearVelocity(TailFrame->GetValue().LinearVelocity);
-					USMC->SetPhysicsAngularVelocityInDegrees(TailFrame->GetValue().AngularVelocity);
-				}
-				RecordTimeLength -= TailFrame->GetValue().DeltaTime;
-				TimeFrames.RemoveNode(TailFrame);
-			}
+			// 移除物理速度设置，因为物理模拟已禁用
+			// USMC->SetPhysicsLinearVelocity(TailFrame->GetValue().LinearVelocity);
+			// USMC->SetPhysicsAngularVelocityInDegrees(TailFrame->GetValue().AngularVelocity);
+
+			RecordTimeLength -= TailFrame->GetValue().DeltaTime;
+			TimeFrames.RemoveNode(TailFrame);
 		}
 	}
 }
@@ -112,5 +108,30 @@ void UTimeReversalComponent::SetTimeReversing(bool TimeReversingState)
 {
 	IsTimeReversing = TimeReversingState;
 
+	TArray<UStaticMeshComponent*> CompArray;
+	Owner->GetComponents<UStaticMeshComponent>(CompArray);
+	if (CompArray.Num() > 0)
+	{
+		UStaticMeshComponent* USMC = CompArray[0];
+		if (USMC)
+		{
+			// 启用或禁用物理模拟
+			if (TimeReversingState)
+			{
+				USMC->SetSimulatePhysics(false);
+			}
+			else
+			{
+				USMC->SetSimulatePhysics(true);
+				// 当时间回溯结束时，可以设置一个初始速度，使其从回溯点开始继续运动
+				if (TimeFrames.Num() > 0)
+				{
+					const TimeInfo& LastFrame = TimeFrames.GetHead()->GetValue();
+					USMC->SetPhysicsLinearVelocity(LastFrame.LinearVelocity);
+					USMC->SetPhysicsAngularVelocityInDegrees(LastFrame.AngularVelocity);
+				}
+			}
+		}
+	}
 }
 
