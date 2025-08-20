@@ -46,7 +46,7 @@ public:
 	bool IsTimeReversing;
 	bool IsOutdated;
 	float RecordTimeLength;
-	TDoubleLinkedList<TimeInfo> TimeInfoFrames;
+	TDoubleLinkedList<TimeInfo> TimeFrames;
 
 	UFUNCTION(BlueprintCallable)
 	void SetTimeReversing(bool TimeReversingState);
