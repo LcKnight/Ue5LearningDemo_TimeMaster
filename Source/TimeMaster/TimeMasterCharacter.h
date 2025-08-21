@@ -71,6 +71,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* TimeReverseAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* FlashAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SuperJumpAction;
+
+
+
 	/** Name of the first person mesh weapon socket */
 	UPROPERTY(EditAnywhere, Category = "Weapons")
 	FName FirstPersonWeaponSocket = FName("HandGrip_R");
@@ -85,6 +93,13 @@ protected:
 
 	/** Current HP remaining to this character */
 	float CurrentHP = 0.0f;
+
+
+	UPROPERTY(EditAnywhere, Category = "Flash")
+	float FlashDistance = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Flash")
+	float SuperJumpForce = 500.0f;
 
 	/** List of weapons picked up by the character */
 	TArray<ATimeMasterWeapon*> OwnedWeapons;
@@ -169,6 +184,14 @@ protected:
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoTimeReverseEnd();
+
+
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	virtual void DoFlash();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void DoSuperJump();
 
 	/** Attaches a weapon's meshes to the owner */
 	virtual void AttachWeaponMeshes(ATimeMasterWeapon* Weapon) override;

@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "TimeMasterGameModeBase.h"
 
 // Sets default values
@@ -106,6 +107,9 @@ void ATimeMasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Switch weapon
 		EnhancedInputComponent->BindAction(SwitchWeaponAction, ETriggerEvent::Triggered, this, &ATimeMasterCharacter::DoSwitchWeapon);
+
+		EnhancedInputComponent->BindAction(FlashAction, ETriggerEvent::Triggered, this, &ATimeMasterCharacter::DoFlash);
+		EnhancedInputComponent->BindAction(SuperJumpAction, ETriggerEvent::Triggered, this, &ATimeMasterCharacter::DoSuperJump);
 
 		EnhancedInputComponent->BindAction(TimeReverseAction, ETriggerEvent::Started, this, &ATimeMasterCharacter::DoTimeReverseStart);
 		EnhancedInputComponent->BindAction(TimeReverseAction, ETriggerEvent::Completed, this, &ATimeMasterCharacter::DoTimeReverseEnd);
@@ -248,6 +252,48 @@ void ATimeMasterCharacter::DoSwitchWeapon()
 		// activate the new weapon
 		CurrentWeapon->ActivateWeapon();
 	}
+}
+
+void ATimeMasterCharacter::DoFlash()
+{
+	FVector StartPos = GetActorLocation();
+	FVector EndPos;
+
+	// 获取角色的朝向向量
+	FVector ForwardVector = GetActorForwardVector();
+
+	// 如果角色正在移动，并且速度方向与朝向方向一致，可以考虑使用速度方向
+	// 但通常情况下，直接使用朝向方向更可靠
+	EndPos = ForwardVector * FlashDistance + StartPos;
+
+	const TArray<AActor*> TmpArray;
+	FHitResult OutHitResult;
+
+	if (UKismetSystemLibrary::LineTraceSingle(
+		this,
+		StartPos,
+		EndPos,
+		ETraceTypeQuery::TraceTypeQuery1,
+		false,
+		TmpArray,
+		EDrawDebugTrace::None,
+		OutHitResult,
+		true
+	))
+	{
+		SetActorLocation(OutHitResult.Location);
+	}
+	else
+	{
+		SetActorLocation(EndPos);
+	}
+}
+
+void ATimeMasterCharacter::DoSuperJump()
+{
+
+	// LaunchCharacter 接受一个FVector，代表要施加的瞬时速度
+	LaunchCharacter(FVector(0.0f, 0.0f, SuperJumpForce), false, true);
 }
 
 void ATimeMasterCharacter::AttachWeaponMeshes(ATimeMasterWeapon* Weapon)
