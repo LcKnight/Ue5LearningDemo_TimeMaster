@@ -18,6 +18,10 @@ UTimeReversalComponent::UTimeReversalComponent()
 	IsTimeReversing = false;
 	IsOutdated = false;
 	RecordTimeLength = 0.0f;
+	ReversalSpeed = 2.0;
+
+	//即默认绑定委托
+	bBind = true;
 	// ...
 }
 
@@ -38,6 +42,17 @@ void UTimeReversalComponent::BeginPlay()
 		}
 	}
 
+}
+
+void UTimeReversalComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	// 确保在组件销毁前，移除委托的绑定
+	if (ATimeMasterCharacter* TimeMasterCharacter = Cast<ATimeMasterCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
+		TimeMasterCharacter->TimeReverseDelegate.RemoveDynamic(this, &UTimeReversalComponent::SetTimeReversing);
+	}
 }
 
 
@@ -85,21 +100,41 @@ void UTimeReversalComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 		auto HeadFrame = TimeFrames.GetHead();
 		auto TailFrame = TimeFrames.GetTail();
-		if (HeadFrame && TailFrame && HeadFrame == TailFrame) {
+		if (TimeFrames.Num() <=0) {
 			RecordTimeLength = 0.f;
 			IsOutdated = true;
 		}
 		else if (TailFrame) {
-			// 直接设置位置和旋转，因为物理模拟已禁用
-			Owner->SetActorLocation(TailFrame->GetValue().Location);
-			Owner->SetActorRotation(TailFrame->GetValue().Rotation);
+			if (TimeFrames.Num() > ReversalSpeed) 
+			{
+				auto TargetFrame = TailFrame;
+				for (int i = 0; i < ReversalSpeed; i++) {
+					TargetFrame = TailFrame->GetPrevNode();
+				}
 
-			// 移除物理速度设置，因为物理模拟已禁用
-			// USMC->SetPhysicsLinearVelocity(TailFrame->GetValue().LinearVelocity);
-			// USMC->SetPhysicsAngularVelocityInDegrees(TailFrame->GetValue().AngularVelocity);
+				// 直接设置位置和旋转，因为物理模拟已禁用
+				Owner->SetActorLocation(TargetFrame->GetValue().Location);
+				Owner->SetActorRotation(TargetFrame->GetValue().Rotation);
 
-			RecordTimeLength -= TailFrame->GetValue().DeltaTime;
-			TimeFrames.RemoveNode(TailFrame);
+				// 移除物理速度设置，因为物理模拟已禁用
+				// USMC->SetPhysicsLinearVelocity(TailFrame->GetValue().LinearVelocity);
+				// USMC->SetPhysicsAngularVelocityInDegrees(TailFrame->GetValue().AngularVelocity);
+
+				for (int i = 0; i < ReversalSpeed; i++) {
+					auto NewTailFrame = TimeFrames.GetTail();
+					RecordTimeLength -= NewTailFrame->GetValue().DeltaTime;
+					TimeFrames.RemoveNode(NewTailFrame);
+				}
+			}
+			else {
+				// 直接设置位置和旋转，因为物理模拟已禁用
+				Owner->SetActorLocation(HeadFrame->GetValue().Location);
+				Owner->SetActorRotation(HeadFrame->GetValue().Rotation);
+				TimeFrames.Empty();
+				RecordTimeLength = 0.f;
+				IsOutdated = true;
+
+			}
 		}
 	}
 }
@@ -131,6 +166,27 @@ void UTimeReversalComponent::SetTimeReversing(bool TimeReversingState)
 					USMC->SetPhysicsAngularVelocityInDegrees(LastFrame.AngularVelocity);
 				}
 			}
+		}
+	}
+}
+
+void UTimeReversalComponent::ToggleDelegateBinding()
+{
+	if (ATimeMasterCharacter* TimeMasterCharacter = Cast<ATimeMasterCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
+		if (bBind)
+		{
+			// 如果bBind为true，则解除委托绑定
+			TimeMasterCharacter->TimeReverseDelegate.RemoveDynamic(this, &UTimeReversalComponent::SetTimeReversing);
+			UE_LOG(LogTemp, Warning, TEXT("TimeReversalComponent: Delegate unbound."));
+			bBind = false;
+		}
+		else
+		{
+			// 如果bBind为false，则添加委托绑定
+			TimeMasterCharacter->TimeReverseDelegate.AddDynamic(this, &UTimeReversalComponent::SetTimeReversing);
+			UE_LOG(LogTemp, Warning, TEXT("TimeReversalComponent: Delegate bound."));
+			bBind = true;
 		}
 	}
 }

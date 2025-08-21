@@ -3,6 +3,7 @@
 
 #include "TimeMasterCharacter.h"
 #include "TimeMasterWeapon.h"
+#include "TimeReversalComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Animation/AnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -33,6 +34,7 @@ ATimeMasterCharacter::ATimeMasterCharacter()
 
 
 	PawnNoiseEmitter = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("Pawn Noise Emitter"));
+	CharacterTimeReversalComponent = CreateDefaultSubobject<UTimeReversalComponent>(TEXT("Character TimeReversal Component"));
 
 	// Create the Camera Component	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
@@ -190,11 +192,13 @@ void ATimeMasterCharacter::DoJumpEnd()
 
 void ATimeMasterCharacter::DoTimeReverseStart()
 {
+	//CharacterTimeReversalComponent->IsTimeReversing = true;
 	TimeReverseDelegate.Broadcast(true);
 }
 
 void ATimeMasterCharacter::DoTimeReverseEnd()
 {
+	//CharacterTimeReversalComponent->IsTimeReversing = false;
 	TimeReverseDelegate.Broadcast(false);
 }
 

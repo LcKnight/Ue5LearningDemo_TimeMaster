@@ -21,6 +21,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FBulletCountUpdatedDelegate, int32,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDamagedDelegate, float, LifePercent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTimeReverseDelegate, bool, IsTimeReversing);
 
+class UTimeReversalComponent;
+
 UCLASS()
 class TIMEMASTER_API ATimeMasterCharacter : public ACharacter,public ITimeMasterWeaponHolder
 {
@@ -218,4 +220,8 @@ public:
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
+	UTimeReversalComponent* CharacterTimeReversalComponent;
+
+	UFUNCTION(BlueprintCallable)
+	UTimeReversalComponent* GetCharacterTimeReversalComponent()const { return CharacterTimeReversalComponent; };
 };
